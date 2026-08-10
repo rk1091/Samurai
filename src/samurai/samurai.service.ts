@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { computeCostUsd } from './pricing';
 import { LlmCallResult, TraceMeta, TraceOutcome } from './types';
+import { ProviderAdapter } from './adapters/provider-adapter';
 
 @Injectable()
 export class SamuraiService {
@@ -46,24 +47,50 @@ export class SamuraiService {
     } catch (err: any) {
       const latencyMs = Date.now() - start;
 
-      const row = await this.prisma.trace.create({
-        data: {
-          projectTag: meta.project,
-          prompt: meta.promptText,
-          response: null,
-          model: 'unknown',
-          latencyMs,
-          status: 'fail',
-          errorMessage: String(err?.message ?? err),
-          parentTraceId: meta.parentTraceId,
-        },
-      });
+      // Logging the failure must never hide the original failure. If Postgres
+      // itself is down, we still re-throw the real LLM-call error — a caller
+      // who loses their DB shouldn't also lose visibility into why their
+      // LLM call failed.
+      try {
+        const row = await this.prisma.trace.create({
+          data: {
+            projectTag: meta.project,
+            prompt: meta.promptText,
+            response: null,
+            model: 'unknown',
+            latencyMs,
+            status: 'fail',
+            errorMessage: String(err?.message ?? err),
+            parentTraceId: meta.parentTraceId,
+          },
+        });
+        (err as any).samuraiTraceId = row.id;
+      } catch (dbErr) {
+        console.error('[samurai] Failed to write failure trace:', dbErr);
+      }
 
       // Re-throw so the caller's own error handling still runs —
       // Samurai observes, it doesn't swallow failures.
-      (err as any).samuraiTraceId = row.id;
       throw err;
     }
+  }
+
+  /**
+   * Provider-agnostic entry point. Instead of the caller pre-shaping their
+   * response into LlmCallResult themselves, pass the provider's RAW response
+   * plus an adapter (openaiAdapter, anthropicAdapter, or your own) and
+   * Samurai normalizes it internally. This is what makes wiring in a new
+   * provider a one-line change at the call site, not a rewrite of trace().
+   */
+  async traceRaw<RawResponse>(
+    callFn: () => Promise<RawResponse>,
+    adapter: ProviderAdapter<RawResponse>,
+    meta: TraceMeta,
+  ): Promise<TraceOutcome<LlmCallResult>> {
+    return this.trace(async () => {
+      const raw = await callFn();
+      return adapter(raw);
+    }, meta);
   }
 
   async listTraces(projectTag?: string) {

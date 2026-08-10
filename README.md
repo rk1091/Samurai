@@ -49,6 +49,30 @@ Windows note: if `docker compose` isn't recognized, use `docker-compose up -d`
 - `src/samurai/samurai.controller.ts` — `GET /api/traces` and
   `GET /api/traces/summary`, the API a dashboard UI would sit on top of.
 
+## Provider-agnostic design
+
+`trace()` never sees a provider's raw response shape — only Samurai's own
+`LlmCallResult` contract (`model`, `content`, `usage`). Each provider gets a
+small adapter function that maps its response into that shape:
+
+- `src/samurai/adapters/openai.adapter.ts`
+- `src/samurai/adapters/anthropic.adapter.ts`
+
+Use `traceRaw(callFn, adapter, meta)` instead of `trace()` to pass a raw
+provider response through an adapter automatically. Adding a new provider
+means writing one adapter function — nothing else changes.
+
+## LangChain integration
+
+`src/samurai/langchain/samurai-callback-handler.ts` — drop this into any
+LangChain chain or agent's `callbacks: [...]` array and every LLM call
+inside it is traced automatically, including parent/child chain linking
+via LangChain's own `runId`/`parentRunId`. See `examples/langchain-call.ts`.
+
+```bash
+npm run example:langchain
+```
+
 ## Next steps (not built yet)
 
 - React dashboard consuming `/api/traces` and `/api/traces/summary`

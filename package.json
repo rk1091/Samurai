@@ -9,6 +9,7 @@
     "example:basic": "ts-node examples/basic-call.ts",
     "example:fail": "ts-node examples/failing-call.ts",
     "example:chain": "ts-node examples/chained-call.ts",
+    "example:langchain": "ts-node examples/langchain-call.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init"
   },
@@ -18,6 +19,8 @@
     "@nestjs/platform-express": "^10.4.0",
     "@prisma/client": "^5.20.0",
     "dotenv": "^16.4.5",
+    "@langchain/core": "^0.3.0",
+    "@langchain/openai": "^0.3.0",
     "openai": "^4.60.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
