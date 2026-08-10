@@ -73,6 +73,20 @@ via LangChain's own `runId`/`parentRunId`. See `examples/langchain-call.ts`.
 npm run example:langchain
 ```
 
+## Dashboard (React, separate app)
+
+```bash
+cd dashboard
+npm install
+npm run dev
+# -> opens at http://localhost:5173, reads from the backend on :4000
+```
+
+Requires the backend (`npm run start:dev` in the project root) already running.
+Three widgets: summary cards (calls/cost/failures/latency), cost-over-time
+line chart (grouped by day, client-side — same "don't over-engineer for 200
+rows" reasoning as `costSummary()`), and a failed-calls table.
+
 ## Next steps (not built yet)
 
 - React dashboard consuming `/api/traces` and `/api/traces/summary`
