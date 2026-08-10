@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: samurai-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: samurai
+      POSTGRES_PASSWORD: samurai
+      POSTGRES_DB: samurai
+    ports:
+      - "5433:5432"
+    volumes:
+      - samurai_pgdata:/var/lib/postgresql/data
+
+volumes:
+  samurai_pgdata:
