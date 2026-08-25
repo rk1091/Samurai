@@ -1,0 +1,11 @@
+{
+  "name": "@samurai/openai",
+  "version": "0.1.0",
+  "description": "Auto-instrument the OpenAI SDK once at startup — every call anywhere in your codebase gets traced to Samurai, zero changes at call sites.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": { "build": "tsc" },
+  "keywords": ["openai", "observability", "auto-instrumentation", "tracing"],
+  "peerDependencies": { "openai": ">=4.0.0" },
+  "devDependencies": { "openai": "^4.60.0", "typescript": "^5.5.4" }
+}
