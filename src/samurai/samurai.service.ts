@@ -8,14 +8,6 @@ import { ProviderAdapter } from './adapters/provider-adapter';
 export class SamuraiService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Wrap any LLM/agent call. Pass a function that performs the call and
-   * returns { model, content, usage }. Samurai measures latency, computes
-   * cost, and writes one trace row — win or fail.
-   *
-   * For multi-step agent chains, pass the previous step's traceId as
-   * meta.parentTraceId to link the chain.
-   */
   async trace<T extends LlmCallResult>(
     callFn: () => Promise<T>,
     meta: TraceMeta,
@@ -47,10 +39,6 @@ export class SamuraiService {
     } catch (err: any) {
       const latencyMs = Date.now() - start;
 
-      // Logging the failure must never hide the original failure. If Postgres
-      // itself is down, we still re-throw the real LLM-call error — a caller
-      // who loses their DB shouldn't also lose visibility into why their
-      // LLM call failed.
       try {
         const row = await this.prisma.trace.create({
           data: {
@@ -69,19 +57,10 @@ export class SamuraiService {
         console.error('[samurai] Failed to write failure trace:', dbErr);
       }
 
-      // Re-throw so the caller's own error handling still runs —
-      // Samurai observes, it doesn't swallow failures.
       throw err;
     }
   }
 
-  /**
-   * Provider-agnostic entry point. Instead of the caller pre-shaping their
-   * response into LlmCallResult themselves, pass the provider's RAW response
-   * plus an adapter (openaiAdapter, anthropicAdapter, or your own) and
-   * Samurai normalizes it internally. This is what makes wiring in a new
-   * provider a one-line change at the call site, not a rewrite of trace().
-   */
   async traceRaw<RawResponse>(
     callFn: () => Promise<RawResponse>,
     adapter: ProviderAdapter<RawResponse>,

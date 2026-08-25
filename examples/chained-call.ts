@@ -1,8 +1,3 @@
-/**
- * Example 3: a 2-step chain — the output of call 1 feeds into call 2,
- * linked via parentTraceId. This is the pattern multi-step agents use.
- * Run: npm run example:chain
- */
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -33,7 +28,6 @@ async function main() {
   await prisma.onModuleInit();
   const samurai = new SamuraiService(prisma);
 
-  // Step 1: generate a topic
   const step1Prompt = 'Name one interesting topic in distributed systems. Reply with just the topic.';
   const { result: step1, traceId: step1Id } = await samurai.trace(
     () => callOpenAI(step1Prompt),
@@ -41,7 +35,6 @@ async function main() {
   );
   console.log('Step 1 output:', step1.content);
 
-  // Step 2: use step 1's output, linked back via parentTraceId
   const step2Prompt = `Explain "${step1.content}" in two sentences.`;
   const { result: step2, traceId: step2Id } = await samurai.trace(
     () => callOpenAI(step2Prompt),

@@ -4,9 +4,6 @@ export interface TraceMeta {
   parentTraceId?: string;
 }
 
-// Minimal shape Samurai expects back from any LLM call it wraps.
-// Matches OpenAI's chat completion response closely enough to work out of the box;
-// adapt the extraction in samurai.service.ts if you wrap a different provider.
 export interface LlmCallResult {
   model: string;
   content: string;

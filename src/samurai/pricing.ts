@@ -14,8 +14,6 @@ export function computeCostUsd(
 ): number {
   const rate = PRICING_PER_1K_TOKENS[model];
   if (!rate) {
-    // Don't fail silently on an unrecognized model — cost numbers built on
-    // a guessed rate are worse than no numbers, because they look real.
     console.warn(
       `[samurai] No pricing entry for model "${model}", using default rate. ` +
         `Cost figures for this trace may be inaccurate — add "${model}" to PRICING_PER_1K_TOKENS.`,

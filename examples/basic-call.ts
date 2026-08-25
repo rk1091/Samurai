@@ -1,7 +1,3 @@
-/**
- * Example 1: wrap a single OpenAI call through Samurai.
- * Run: npm run example:basic
- */
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 dotenv.config();

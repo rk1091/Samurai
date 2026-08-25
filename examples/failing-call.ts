@@ -1,8 +1,3 @@
-/**
- * Example 2: a call that fails (bad model name) — proves Samurai
- * still writes a trace row on failure, with the error captured.
- * Run: npm run example:fail
- */
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -24,7 +19,7 @@ async function main() {
     await samurai.trace(
       async () => {
         const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini-DOES-NOT-EXIST', // intentional bad value
+          model: 'gpt-4o-mini-DOES-NOT-EXIST',
           messages: [{ role: 'user', content: promptText }],
         });
         return {
