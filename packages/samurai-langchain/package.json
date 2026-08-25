@@ -1,0 +1,18 @@
+{
+  "name": "@samurai/langchain",
+  "version": "0.1.0",
+  "description": "Drop-in LangChain callback handler that traces every LLM/agent call to a Samurai observability backend — cost, latency, failures, multi-step chain linking.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": ["langchain", "observability", "llm", "tracing", "agent"],
+  "peerDependencies": {
+    "@langchain/core": ">=0.2.0"
+  },
+  "devDependencies": {
+    "@langchain/core": "^0.3.0",
+    "typescript": "^5.5.4"
+  }
+}
