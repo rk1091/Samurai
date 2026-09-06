@@ -27,22 +27,15 @@ export class SamuraiController {
     @Query('pageSize') pageSize?: string,
   ) {
     return this.samurai.listTraces({
-      project,
-      status,
-      model,
-      search,
+      project, status, model, search,
       since: parseSince(range),
       page: page ? Number(page) : undefined,
       pageSize: pageSize ? Number(pageSize) : undefined,
     });
   }
 
-  /** Unpaginated, for client-side chart aggregation. */
   @Get('chart-data')
-  async chartData(
-    @Query('project') project?: string,
-    @Query('range') range?: string,
-  ) {
+  async chartData(@Query('project') project?: string, @Query('range') range?: string) {
     return this.samurai.listTracesForCharts({ project, since: parseSince(range) });
   }
 
@@ -54,6 +47,11 @@ export class SamuraiController {
   @Get('model-breakdown')
   async modelBreakdown(@Query('project') project?: string) {
     return this.samurai.modelBreakdown(project);
+  }
+
+  @Get('projects')
+  async projects() {
+    return this.samurai.listProjects();
   }
 
   @Get(':id')

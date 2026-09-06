@@ -23,7 +23,6 @@ export class SamuraiService {
     meta: TraceMeta,
   ): Promise<TraceOutcome<T>> {
     const start = Date.now();
-
     try {
       const result = await callFn();
       const latencyMs = Date.now() - start;
@@ -44,11 +43,9 @@ export class SamuraiService {
           parentTraceId: meta.parentTraceId,
         },
       });
-
       return { result, traceId: row.id };
     } catch (err: any) {
       const latencyMs = Date.now() - start;
-
       try {
         const row = await this.prisma.trace.create({
           data: {
@@ -66,7 +63,6 @@ export class SamuraiService {
       } catch (dbErr) {
         console.error('[samurai] Failed to write failure trace:', dbErr);
       }
-
       throw err;
     }
   }
@@ -86,7 +82,11 @@ export class SamuraiService {
     return {
       ...(options.project ? { projectTag: options.project } : {}),
       ...(options.status ? { status: options.status } : {}),
-      ...(options.model ? { model: options.model } : {}),
+      // FIX: was an exact match, so typing "gemini" never matched
+      // "gemini-1.5-flash". Contains + case-insensitive, like search.
+      ...(options.model
+        ? { model: { contains: options.model, mode: 'insensitive' as const } }
+        : {}),
       ...(options.search
         ? { prompt: { contains: options.search, mode: 'insensitive' as const } }
         : {}),
@@ -111,14 +111,6 @@ export class SamuraiService {
     return { rows, total, page, pageSize };
   }
 
-  /**
-   * Unpaginated fetch used for client-side chart aggregation (cost/day,
-   * tokens/day, error-rate/day, latency histogram). Same "don't
-   * over-engineer for a few hundred rows" reasoning as costSummary() —
-   * a dedicated aggregation endpoint per chart isn't worth it at this
-   * scale, but this comment is the flag for when it would be (thousands+
-   * of rows, this stops being free).
-   */
   async listTracesForCharts(options: ListTracesOptions = {}) {
     const where = this.buildWhere(options);
     return this.prisma.trace.findMany({
@@ -126,6 +118,26 @@ export class SamuraiService {
       orderBy: { timestamp: 'asc' },
       take: 2000,
     });
+  }
+
+  /**
+   * Distinct projects, ordered by their most recent trace — powers the
+   * sidebar's project list, most-active-first.
+   */
+  async listProjects() {
+    const grouped = await this.prisma.trace.groupBy({
+      by: ['projectTag'],
+      _max: { timestamp: true },
+      _count: { _all: true },
+    });
+
+    return grouped
+      .map((g) => ({
+        project: g.projectTag,
+        lastActivity: g._max.timestamp,
+        traceCount: g._count._all,
+      }))
+      .sort((a, b) => (b.lastActivity?.getTime() ?? 0) - (a.lastActivity?.getTime() ?? 0));
   }
 
   async traceDetail(id: string) {
@@ -143,7 +155,6 @@ export class SamuraiService {
     const failCount = traces.filter((t) => t.status === 'fail').length;
     const avgLatency =
       traces.reduce((sum, t) => sum + t.latencyMs, 0) / (traces.length || 1);
-
     return {
       totalCalls: traces.length,
       totalCostUsd: Number(totalCost.toFixed(4)),
@@ -156,7 +167,6 @@ export class SamuraiService {
     const traces = await this.prisma.trace.findMany({
       where: projectTag ? { projectTag } : undefined,
     });
-
     const byModel = new Map<string, { calls: number; costUsd: number }>();
     for (const t of traces) {
       const entry = byModel.get(t.model) ?? { calls: 0, costUsd: 0 };
@@ -164,7 +174,6 @@ export class SamuraiService {
       entry.costUsd += t.costUsd ?? 0;
       byModel.set(t.model, entry);
     }
-
     return Array.from(byModel.entries()).map(([model, stats]) => ({
       model,
       calls: stats.calls,
