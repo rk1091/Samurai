@@ -1,17 +1,5 @@
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// Groups raw trace rows into per-day cost totals. Done client-side since
-// at this scale (a few hundred rows) it's simpler than adding a dedicated
-// backend aggregation endpoint — see samurai.service.ts costSummary() for
-// the same tradeoff reasoning.
 function groupByDay(traces) {
   const byDay = {};
   for (const t of traces) {
@@ -25,11 +13,9 @@ function groupByDay(traces) {
 
 export default function CostChart({ traces }) {
   const data = groupByDay(traces);
-
   if (data.length === 0) {
     return <p style={{ opacity: 0.6 }}>No trace data yet — run an example script.</p>;
   }
-
   return (
     <div style={{ marginBottom: '2rem' }}>
       <h3>Cost over time</h3>

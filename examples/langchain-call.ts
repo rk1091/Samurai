@@ -1,8 +1,3 @@
-/**
- * Example 4: a LangChain call auto-traced via SamuraiCallbackHandler —
- * no manual trace() call needed, the handler observes it.
- * Run: npm run example:langchain
- */
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 dotenv.config();

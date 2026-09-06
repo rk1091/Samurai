@@ -4,22 +4,6 @@ import { LLMResult } from '@langchain/core/outputs';
 import { PrismaService } from '../../prisma/prisma.service';
 import { computeCostUsd } from '../pricing';
 
-/**
- * Plug this into any LangChain chain/agent's `callbacks: [...]` array and
- * every LLM call inside it gets traced automatically — no manual trace()
- * calls needed at each step. This is what makes Samurai usable on agentic
- * chains someone else built (e.g. a LangGraph agent), not just code you
- * write by hand.
- *
- * Usage:
- *   const handler = new SamuraiCallbackHandler(prisma, "my-agent-project");
- *   await chain.invoke(input, { callbacks: [handler] });
- *
- * How chain linking works here: LangChain gives each run a runId and,
- * for nested calls, a parentRunId. We map runId -> our traceId as calls
- * start, so a child run can look up its parent's Samurai traceId and
- * link parentTraceId correctly — same chain model as the manual trace().
- */
 export class SamuraiCallbackHandler extends BaseCallbackHandler {
   name = 'samurai_callback_handler';
 
@@ -40,8 +24,6 @@ export class SamuraiCallbackHandler extends BaseCallbackHandler {
     parentRunId?: string,
   ): Promise<void> {
     this.runStartTimes.set(runId, Date.now());
-    // Stash prompt text keyed by runId so handleLLMEnd can retrieve it —
-    // LangChain doesn't pass the prompt back to us on completion.
     (this as any)[`__prompt_${runId}`] = prompts.join('\n');
   }
 
