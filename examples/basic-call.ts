@@ -6,8 +6,14 @@ import OpenAI from 'openai';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SamuraiService } from '../src/samurai/samurai.service';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.GOOGLE_API_KEY,
+  baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+});
 
+  console.log(
+  'Google API key loaded:',
+  !!process.env.GOOGLE_API_KEY,
+);
 async function main() {
   const prisma = new PrismaService();
   await prisma.onModuleInit();
@@ -18,7 +24,7 @@ async function main() {
   const { result, traceId } = await samurai.trace(
     async () => {
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gemini-3.7-flash',
         messages: [{ role: 'user', content: promptText }],
       });
       return {
