@@ -1,6 +1,9 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+import { capitalize } from '../utils';
+
 export default function ModelBreakdownChart({ data }) {
+  data = data?.map((d) => ({ ...d, model: capitalize(d.model) }));
   if (!data || data.length === 0) {
     return <p style={{ opacity: 0.6 }}>No model data yet.</p>;
   }

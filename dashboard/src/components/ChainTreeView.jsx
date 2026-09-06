@@ -1,9 +1,11 @@
+import { capitalize } from '../utils';
+
 const nodeStyle = (highlight) => ({
   padding: '0.5rem 0.75rem',
-  border: `1px solid ${highlight ? '#4f9eff' : '#333'}`,
+  border: `1px solid ${highlight ? '#5b8cff' : '#27272a'}`,
   borderRadius: 6,
   marginBottom: 6,
-  background: highlight ? '#1a2536' : '#181818',
+  background: highlight ? '#1a2340' : '#0f0f10',
   fontSize: 13,
 });
 
@@ -17,11 +19,11 @@ export default function ChainTreeView({ trace, onSelectId }) {
       <h4>Chain</h4>
       {trace.parent && (
         <div onClick={() => onSelectId(trace.parent.id)} style={{ ...nodeStyle(false), cursor: 'pointer' }}>
-          ↑ Parent — {trace.parent.model} ({trace.parent.status})
+          ↑ Parent — {capitalize(trace.parent.model)} ({capitalize(trace.parent.status)})
         </div>
       )}
       <div style={nodeStyle(true)}>
-        ● This trace — {trace.model} ({trace.status})
+        ● This trace — {capitalize(trace.model)} ({capitalize(trace.status)})
       </div>
       {trace.children?.map((c) => (
         <div
@@ -29,7 +31,7 @@ export default function ChainTreeView({ trace, onSelectId }) {
           onClick={() => onSelectId(c.id)}
           style={{ ...nodeStyle(false), marginLeft: '1.5rem', cursor: 'pointer' }}
         >
-          ↓ Child — {c.model} ({c.status})
+          ↓ Child — {capitalize(c.model)} ({capitalize(c.status)})
         </div>
       ))}
     </div>
