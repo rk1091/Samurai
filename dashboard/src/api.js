@@ -38,3 +38,7 @@ export function fetchModelBreakdown(project) {
   const params = project ? `?project=${encodeURIComponent(project)}` : '';
   return get(`/api/traces/model-breakdown${params}`);
 }
+
+export function fetchProjects() {
+  return get('/api/traces/projects');
+}

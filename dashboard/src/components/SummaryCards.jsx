@@ -9,11 +9,11 @@ export default function SummaryCards({ summary }) {
   ];
 
   return (
-    <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+    <div className="summary-cards">
       {cards.map((c) => (
-        <div key={c.label} style={{ flex: 1, padding: '1rem', border: '1px solid #333', borderRadius: 8 }}>
-          <div style={{ fontSize: 12, opacity: 0.7 }}>{c.label}</div>
-          <div style={{ fontSize: 24, fontWeight: 600 }}>{c.value}</div>
+        <div key={c.label} className="summary-card">
+          <div className="label">{c.label}</div>
+          <div className="value">{c.value}</div>
         </div>
       ))}
     </div>
