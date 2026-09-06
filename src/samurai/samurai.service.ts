@@ -4,6 +4,16 @@ import { computeCostUsd } from './pricing';
 import { LlmCallResult, TraceMeta, TraceOutcome } from './types';
 import { ProviderAdapter } from './adapters/provider-adapter';
 
+export interface ListTracesOptions {
+  project?: string;
+  status?: 'success' | 'fail';
+  model?: string;
+  search?: string;
+  since?: Date;
+  page?: number;
+  pageSize?: number;
+}
+
 @Injectable()
 export class SamuraiService {
   constructor(private readonly prisma: PrismaService) {}
@@ -72,11 +82,56 @@ export class SamuraiService {
     }, meta);
   }
 
-  async listTraces(projectTag?: string) {
+  private buildWhere(options: ListTracesOptions) {
+    return {
+      ...(options.project ? { projectTag: options.project } : {}),
+      ...(options.status ? { status: options.status } : {}),
+      ...(options.model ? { model: options.model } : {}),
+      ...(options.search
+        ? { prompt: { contains: options.search, mode: 'insensitive' as const } }
+        : {}),
+      ...(options.since ? { timestamp: { gte: options.since } } : {}),
+    };
+  }
+
+  async listTraces(options: ListTracesOptions = {}) {
+    const { page = 1, pageSize = 25 } = options;
+    const where = this.buildWhere(options);
+
+    const [rows, total] = await Promise.all([
+      this.prisma.trace.findMany({
+        where,
+        orderBy: { timestamp: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.trace.count({ where }),
+    ]);
+
+    return { rows, total, page, pageSize };
+  }
+
+  /**
+   * Unpaginated fetch used for client-side chart aggregation (cost/day,
+   * tokens/day, error-rate/day, latency histogram). Same "don't
+   * over-engineer for a few hundred rows" reasoning as costSummary() —
+   * a dedicated aggregation endpoint per chart isn't worth it at this
+   * scale, but this comment is the flag for when it would be (thousands+
+   * of rows, this stops being free).
+   */
+  async listTracesForCharts(options: ListTracesOptions = {}) {
+    const where = this.buildWhere(options);
     return this.prisma.trace.findMany({
-      where: projectTag ? { projectTag } : undefined,
-      orderBy: { timestamp: 'desc' },
-      take: 200,
+      where,
+      orderBy: { timestamp: 'asc' },
+      take: 2000,
+    });
+  }
+
+  async traceDetail(id: string) {
+    return this.prisma.trace.findUnique({
+      where: { id },
+      include: { children: true, parent: true },
     });
   }
 
@@ -95,5 +150,25 @@ export class SamuraiService {
       failCount,
       avgLatencyMs: Math.round(avgLatency),
     };
+  }
+
+  async modelBreakdown(projectTag?: string) {
+    const traces = await this.prisma.trace.findMany({
+      where: projectTag ? { projectTag } : undefined,
+    });
+
+    const byModel = new Map<string, { calls: number; costUsd: number }>();
+    for (const t of traces) {
+      const entry = byModel.get(t.model) ?? { calls: 0, costUsd: 0 };
+      entry.calls += 1;
+      entry.costUsd += t.costUsd ?? 0;
+      byModel.set(t.model, entry);
+    }
+
+    return Array.from(byModel.entries()).map(([model, stats]) => ({
+      model,
+      calls: stats.calls,
+      costUsd: Number(stats.costUsd.toFixed(4)),
+    }));
   }
 }
